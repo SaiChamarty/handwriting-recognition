@@ -1,0 +1,6 @@
+# ignore this project's virtual environment
+handwriting-recognition/
+
+# Python cache
+__pycache__/
+*.py[cod]
