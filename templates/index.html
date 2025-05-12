@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Digit Recognizer</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; }
+    #draw, #preview { border: 1px solid #000; touch-action: none; margin: 10px; }
+    #draw { background: black; }
+    #preview { image-rendering: pixelated; }
+    button { margin: 5px; padding: 10px 20px; font-size: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Draw a digit:</h1>
+  <canvas id="draw" width="280" height="280"></canvas><br>
+  <button id="clear">Clear</button>
+  <button id="predict">Predict</button>
+  <p id="result"></p>
+  <h2>Preprocessed 28×28 Image:</h2>
+  <canvas id="preview" width="28" height="28"></canvas>
+
+  <script>
+    const canvas = document.getElementById("draw");
+    const ctx = canvas.getContext("2d");
+    // Initialize black background and white ink
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 15;
+    ctx.lineCap = "round";
+
+    let drawing = false;
+    canvas.addEventListener("pointerdown", () => drawing = true);
+    canvas.addEventListener("pointerup",   () => { drawing = false; ctx.beginPath(); });
+    canvas.addEventListener("pointermove", e => {
+      if (!drawing) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+    });
+
+    document.getElementById("clear").onclick = () => {
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      document.getElementById("result").textContent = "";
+      const prev = document.getElementById("preview");
+      const pctx = prev.getContext("2d");
+      pctx.fillStyle = "black";
+      pctx.fillRect(0, 0, prev.width, prev.height);
+    };
+
+    document.getElementById("predict").onclick = async () => {
+      // Downscale to 28×28 on offscreen
+      const tmp = document.createElement("canvas");
+      tmp.width = tmp.height = 28;
+      const tctx = tmp.getContext("2d");
+      tctx.fillStyle = "black";
+      tctx.fillRect(0, 0, 28, 28);
+      tctx.drawImage(canvas, 0, 0, 28, 28);
+
+      // Show preprocessed image
+      const preview = document.getElementById("preview");
+      const pctx = preview.getContext("2d");
+      pctx.drawImage(tmp, 0, 0);
+
+      // Extract & normalize pixels
+      const img = tctx.getImageData(0, 0, 28, 28);
+      const data = [];
+      for (let i = 0; i < img.data.length; i += 4) {
+        // we have white ink on black background, so pixel is 0=black,255=white
+        const v = img.data[i];
+        data.push(v / 255);
+      }
+
+      // Send to server
+      const res = await fetch("/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pixels: data })
+      });
+      const { prediction, confidence } = await res.json();
+      document.getElementById("result").textContent =
+        `I think it’s a ${prediction} (${(confidence * 100).toFixed(1)}% sure)`;
+    };
+  </script>
+</body>
+</html>
