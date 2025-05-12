@@ -8,6 +8,12 @@ Raw Data -> Data Preprocessing -> Exploratory Data Analysis -> Feature Selection
 [![MNIST Dataset](https://img.shields.io/badge/MNIST-Dataset-blue?style=flat&logo=readthedocs)](https://docs.ultralytics.com/datasets/classify/mnist/)
 ---
 
+## Training
+Model used: Logistic Regression model
+Activation/Probability function used: Softmax for multi-classification
+
+To train your own weights, go to `handwritten_digit.ipynb` to modify training code. 
+
 ## Running the flask for development
 Install flask first
 ```
@@ -18,7 +24,8 @@ or
 pip install flask
 ```
 
-Then, run app.py (assuming you have all dependencies: scikit-learn, tensorflow-macos, )
+Then, run app.py from the root directory.(assuming you have all dependencies: scikit-learn, tensorflow-macos, etc)
+(Trained weights already provided)
 ```
 python app.py
 ```
