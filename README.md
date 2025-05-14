@@ -38,3 +38,6 @@ It will usually run in local port 3000. You will find a message similar to:
 ```
 go to that link, and voila! You can test the logistic regression model working!
 
+## Deployment
+Visit [https://ml.junebase.com] to check out the working of this model!
+
