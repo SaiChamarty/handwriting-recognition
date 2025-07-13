@@ -3,12 +3,13 @@
 from flask import Flask, request, jsonify, render_template
 import numpy as np
 from tensorflow.keras.models import load_model
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app, resources={r"/predict": {"origins": "*"}}, supports_credentials=True)
 
 # ——— 1. Load your trained CNN model ———
 model = load_model("cnn_mnist_model.keras", compile=False)
-
-# ——— 2. Create the Flask app ———
-app = Flask(__name__)
 
 @app.route("/", methods=["GET"])
 def home():
@@ -39,4 +40,4 @@ def predict():
     })
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=3000, debug=True)
+    app.run(host="0.0.0.0", port=4500, debug=True)
