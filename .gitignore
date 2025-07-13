@@ -4,3 +4,4 @@ handwriting-recognition/
 # Python cache
 __pycache__/
 *.py[cod]
+venv/

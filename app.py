@@ -2,26 +2,17 @@
 
 from flask import Flask, request, jsonify, render_template
 import numpy as np
+from tensorflow.keras.models import load_model
 
-# ——— 1. Load your trained parameters ———
-# (Make sure you’ve saved W.npy and b.npy after training)
-W = np.load("W.npy")   # shape (784,10)
-b = np.load("b.npy")   # shape (1,10)
+# ——— 1. Load your trained CNN model ———
+model = load_model("cnn_mnist_model.keras", compile=False)
 
-# ——— 2. Define helper functions ———
-def compute_logits(X, W, b):
-    return X.dot(W) + b
-
-def softmax(logits):
-    shifted    = logits - np.max(logits, axis=1, keepdims=True)
-    exp_scores = np.exp(shifted)
-    return exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
-
-# ——— 3. Create the Flask app ———
+# ——— 2. Create the Flask app ———
 app = Flask(__name__)
+
 @app.route("/", methods=["GET"])
 def home():
-    return render_template("index.html")
+    return render_template("index.html")  # must have templates/index.html
 
 @app.route("/predict", methods=["POST"])
 def predict():
@@ -30,15 +21,17 @@ def predict():
     where each p is a float in [0,1].
     """
     data = request.get_json()
-    pixels = np.array(data["pixels"], dtype=np.float32)
-    # Ensure shape (1, 784)
-    x = pixels.reshape(1, -1)
 
-    # Run the model
-    logits = compute_logits(x, W, b)
-    probs  = softmax(logits)
-    pred   = int(np.argmax(probs, axis=1)[0])
-    conf   = float(probs[0, pred])
+    # 1. Convert to (28, 28)
+    pixels = np.array(data["pixels"], dtype=np.float32).reshape(28, 28)
+
+    # 2. Prepare input for CNN: (1, 28, 28, 1)
+    img = pixels.reshape(1, 28, 28, 1)
+
+    # 3. Predict
+    probs = model.predict(img, verbose=0)[0]
+    pred = int(np.argmax(probs))
+    conf = float(np.max(probs))
 
     return jsonify({
         "prediction": pred,
@@ -46,5 +39,4 @@ def predict():
     })
 
 if __name__ == "__main__":
-    # For development; in production, use a WSGI server like gunicorn
     app.run(host="0.0.0.0", port=3000, debug=True)
